@@ -1,6 +1,6 @@
 import json
 import os
-# import smtplib as smtp
+import smtplib as smtp
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -40,7 +40,7 @@ class FSMFillForm(StatesGroup):
     description = State()
     email = State()      
     file = State()
-    # email_password = State()
+    email_password = State()
 
 
 request_button: InlineKeyboardButton = InlineKeyboardButton(
@@ -131,7 +131,6 @@ async def process_description_sent(message: Message, state: FSMContext):
         text='Спасибо, хотите ли вы оставить свои контактные данные?',
         reply_markup=email_keyboard
     )
-    await state.set_state(FSMFillForm.fill_wish_news)
 
 
 @dp.callback_query(Text(text=['yes_add_email']), ~StateFilter(default_state))
@@ -180,39 +179,40 @@ async def process_buttons_press(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(text='Спасибо! Ваш запрос отправлен!')
 
 
-# @dp.callback_query(Text(text=['email_button_pressed']), ~StateFilter(default_state))
-# async def process_buttons_press(callback: CallbackQuery, state: FSMContext):
-#     await callback.answer('Введите пароль:')
-#     await state.set_state(FSMFillForm.email_password)
+@dp.callback_query(Text(text=['email_button_pressed']), ~StateFilter(default_state))
+async def process_buttons_press(callback: CallbackQuery, state: FSMContext):
+    await callback.answer('Введите пароль:')
+    await state.set_state(FSMFillForm.email_password)
 
 
-# def send_mail(message):
-#     msg = MIMEMultipart()
-#     server = smtp.SMTP('smtp.rambler.ru', 465)
-#     server.starttls()
-#     server.login(
-#         user_dict[message.from_user.id]['email'],
-#         user_dict[message.from_user.id]['email_password']
-#     )
-#     msg['Subject'] = user_dict[message.from_user.id]['theme']
-#     msg['text'] = user_dict[message.from_user.id]['description']
-#     attach = os.path.join(MEDIA_DIR, 'text.txt')
-#     msg.attach(MIMEText(open(attach).read()))
-#     mime = MIMEText(msg, 'plain', 'utf-8')
-#     server.sendmail(
-#         from_addr=user_dict[message.from_user.id]['email'],
-#         to_addrs='artemchepa@yandex.ru',
-#         msg=mime.as_string(),
-#     )
+def send_mail(message):
+    msg = MIMEMultipart()
+    server = smtp.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(
+        user_dict[message.from_user.id]['email'],
+        user_dict[message.from_user.id]['email_password']
+    )
+    msg['Subject'] = user_dict[message.from_user.id]['theme']
+    msg['text'] = user_dict[message.from_user.id]['description']
+    attach = os.path.join(MEDIA_DIR, 'text.txt')
+    msg.attach(MIMEText(open(attach).read()))
+    mime = MIMEText(msg['text'], 'plain', 'utf-8')
+    mime['Subject'] = Header(msg['subject'], 'utf-8')
+    server.sendmail(
+        from_addr=user_dict[message.from_user.id]['email'],
+        to_addrs='artemchepa@yandex.ru',
+        msg=mime.as_string(),
+    )
 
 
-# @dp.message(StateFilter(FSMFillForm.email_password), )
-# async def process_send_email_password(message: Message, state: FSMContext):
-#     await state.update_data(email_password=message.text)
-#     user_dict[message.from_user.id] = await state.get_data()
-#     await state.clear()
-#     send_mail(message=message)
-#     await message.answer(text='Ваш запрос успешно отправлен по почте.')
+@dp.message(StateFilter(FSMFillForm.email_password), )
+async def process_send_email_password(message: Message, state: FSMContext):
+    await state.update_data(email_password=message.text)
+    user_dict[message.from_user.id] = await state.get_data()
+    await state.clear()
+    send_mail(message=message)
+    await message.answer(text='Ваш запрос успешно отправлен по почте.')
 
 
 
