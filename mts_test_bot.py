@@ -15,7 +15,6 @@ from aiogram.fsm.state import default_state
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import (CallbackQuery, Document, InlineKeyboardButton,
                            InlineKeyboardMarkup, Message)
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -23,8 +22,6 @@ load_dotenv()
 
 BOT_TOKEN = os.getenv('TELEGRAM_TOKEN')
 SERVER_API = os.getenv('SERVER_API')
-print(SERVER_API)
-print(BOT_TOKEN)
 BASE_DIR = Path(__file__).resolve().parent
 MEDIA_DIR = os.path.join(BASE_DIR, 'media')
 
@@ -92,7 +89,6 @@ keyboard_without_add_file_and_add_contact: InlineKeyboardMarkup = InlineKeyboard
 
 @dp.message(CommandStart(), StateFilter(default_state))
 async def process_start_command(message: Message):
-    print(message.chat.full_name)
     await message.answer(text=f'Приветствую Вас, {message.chat.full_name}\n'
                               'Чтобы задать вопрос в техподдержку - '
                               'отправьте команду /ask_question')
